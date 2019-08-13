@@ -15,7 +15,7 @@ export class Store<T extends Object> {
   private cacheStart: Date;
   private cache: number;
   private cacheTimer: number;
-  private updateMiddlewares = [];
+  private updateMiddlewares: Middleware<T>[] = [];
 
   constructor(
     private initialData: T,

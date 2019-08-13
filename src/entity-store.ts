@@ -4,10 +4,10 @@ import { Observable } from 'rxjs';
 
 type ID = string | number;
 
-interface StoreOptions {
+interface EntityStoreOptions<IdKey extends string> {
   name: string;
   cache?: number;
-  idKey: string;
+  idKey: IdKey;
 }
 
 interface EntityState<T> {
@@ -22,46 +22,46 @@ function initialData<T>(): EntityState<T> {
   }
 }
 
-export class EntityStore<T> extends Store<EntityState<T>> {
-  private idKey: string;
+export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> extends Store<EntityState<T>> {
+  private idKey: IdKey;
 
   constructor(
-    options: StoreOptions,
+    options: EntityStoreOptions<IdKey>,
   ) {
     const data: EntityState<T> = {
       ...initialData,
       entities: [],
       activeId: null,
     };
-    super(data as any, options);
+    super(data, options);
     this.idKey = options.idKey;
   }
 
-  public setEntities(entities: T[]) {
+  public setEntities(entities: T[]): void {
     this.update({ entities });
   }
 
-  public selectEntities() {
+  public selectAll(): Observable<T[]> {
     return this.select().pipe(
       map(value => value.entities)
     );
   }
 
   public selectEntity(id: ID): Observable<T> {
-    return this.selectEntities().pipe(
-      map(entities => entities.find(el => el[this.idKey] === id))
+    return this.selectAll().pipe(
+      map(entities => entities.find(el => (el[this.idKey] as ID) === id))
     );
   }
 
-  public getEntities(): T[] {
+  public getAll(): T[] {
     return this.getValue().entities;
   }
 
   public getEntity(id: ID): T {
-    return this.getEntities().find(el => el[this.idKey] === id)
+    return this.getAll().find(el => el[this.idKey] === id)
   }
 
-  public setActiveId(activeId: ID) {
+  public setActiveId(activeId: ID): void {
     this.update({ activeId });
   }
 
@@ -85,10 +85,13 @@ export class EntityStore<T> extends Store<EntityState<T>> {
     )
   }
 
-  public updateEntity(id: ID, entity: T) {
-    const existed = this.getEntity(id);
-    const entities = this.getValue().entities.slice();
-    const index = entities.indexOf(existed);
+  public updateEntity(id: ID, entity: T): void {
+    const existed: T = this.getEntity(id);
+    const entities: T[] = this.getAll().slice();
+    const index: number = entities.indexOf(existed);
+    if (index === -1) {
+      throw new Error('attempt to update nonexistent entity');
+    }
     entities[index] = {
       ...entities[index],
       entity,
