@@ -27,19 +27,19 @@ export class Store<T extends Object> {
     this.cache = options.cache;
   }
 
-  public getValue() {
+  public getValue(): T {
     return this.data.getValue();
   }
 
-  public select() {
+  public select(): Observable<T> {
     return this.data.asObservable();
   }
 
-  public update(value: Partial<T>) {
+  public update(value: Partial<T>): void {
     this.data.next(this.applyMiddlewares(value));
   }
 
-  public set(value: T) {
+  public set(value: T): void {
     this.update(value);
     this.loading.next(false);
     if (this.cache) {
@@ -47,58 +47,58 @@ export class Store<T extends Object> {
     }
   }
 
-  public reset() {
+  public reset(): void {
     this.data.next(this.initialData);
   }
 
-  public setLoading(loading: boolean) {
+  public setLoading(loading: boolean): void {
     this.loading.next(loading);
   }
 
-  public selectLoading() {
+  public selectLoading(): Observable<boolean> {
     return this.loading.asObservable();
   }
 
-  public getLoading() {
-    this.loading.getValue();
+  public getLoading(): boolean {
+    return this.loading.getValue();
   }
 
-  public fetch(fetchingFunction: () => Observable<T>) {
+  public fetch(fetchingFunction: () => Observable<T>): Observable<T> {
     this.setLoading(true);
-    fetchingFunction().pipe(
+    return fetchingFunction().pipe(
       tap(result => this.set(result)),
       tap(() => this.setLoading(false)),
     )
   }
 
-  public setCacheStatus(status: boolean) {
+  public setCacheStatus(status: boolean): void {
     this.cacheStatus.next(status);
-    window.clearTimeout(this.cacheTimer);
+    clearTimeout(this.cacheTimer);
     if (status) {
       this.cacheStart = new Date();
-      this.cacheTimer = window.setTimeout(() => {
+      this.cacheTimer = setTimeout(() => {
         this.setCacheStatus(false)
       })
     }
   }
 
-  public hasCache() {
+  public hasCache(): boolean {
     return !!this.cache;
   }
 
-  public selectCache() {
+  public selectCache(): Observable<boolean> {
     return this.cacheStatus.asObservable();
   }
 
-  public getCache() {
+  public getCache(): boolean {
     return this.cacheStatus.getValue();
   }
 
-  public addMiddleware(middleware: Middleware<T>) {
+  public addMiddleware(middleware: Middleware<T>): void {
     this.updateMiddlewares.push(middleware);
   }
 
-  public clearMiddlewares() {
+  public clearMiddlewares(): void {
     this.updateMiddlewares = [];
   }
 
