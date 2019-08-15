@@ -1,26 +1,7 @@
 import { Store } from './store';
-import { map } from 'rxjs/operators';
+import { map, distinctUntilChanged } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-
-type ID = string | number;
-
-interface EntityStoreOptions<IdKey extends string> {
-  name: string;
-  cache?: number;
-  idKey: IdKey;
-}
-
-interface EntityState<T> {
-  entities: T[],
-  activeId: ID;
-}
-
-function initialData<T>(): EntityState<T> {
-  return {
-    entities: [],
-    activeId: null,
-  }
-}
+import { EntityStoreOptions, ID, EntityState } from 'typing';
 
 export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> extends Store<EntityState<T>> {
   private idKey: IdKey;
@@ -29,7 +10,6 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
     options: EntityStoreOptions<IdKey>,
   ) {
     const data: EntityState<T> = {
-      ...initialData,
       entities: [],
       activeId: null,
     };
@@ -38,7 +18,7 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
   }
 
   public setEntities(entities: T[]): void {
-    this.update({ entities });
+    this.update({ entities: this.sort(entities) });
   }
 
   public selectAll(): Observable<T[]> {
@@ -49,7 +29,8 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
 
   public selectEntity(id: ID): Observable<T> {
     return this.selectAll().pipe(
-      map(entities => entities.find(el => (el[this.idKey] as ID) === id))
+      map(entities => entities.find(el => (el[this.idKey] as ID) === id)),
+      distinctUntilChanged(),
     );
   }
 
@@ -62,6 +43,9 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
   }
 
   public setActiveId(activeId: ID): void {
+    if (this.getEntity(activeId) === undefined) {
+      throw new Error('no entity with this id');
+    }
     this.update({ activeId });
   }
 
@@ -70,7 +54,7 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
   }
 
   public getActive(): T {
-    return this.getValue().entities.find(entity => entity[this.idKey] === this.getActiveId());
+    return this.getEntity(this.getActiveId());
   }
 
   public selectActiveId(): Observable<ID> {
@@ -85,7 +69,7 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
     )
   }
 
-  public updateEntity(id: ID, entity: T): void {
+  public updateEntity(id: ID, entity: Partial<T>): void {
     const existed: T = this.getEntity(id);
     const entities: T[] = this.getAll().slice();
     const index: number = entities.indexOf(existed);
@@ -94,8 +78,33 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
     }
     entities[index] = {
       ...entities[index],
-      entity,
+      ...entity,
     };
     this.setEntities(entities);
+  }
+
+  public addEntity(entity: T) {
+    if(this.getEntity(entity[this.idKey])) {
+      throw new Error('id duplicate');
+    }
+    const rawEntities = this.getAll().slice();
+    rawEntities.push(entity);
+    const entities = this.sort(rawEntities);
+    this.update({ entities });
+  }
+
+  public removeEntity(id: ID) {
+    const e = this.getEntity(id);
+    if (!e) {
+      throw new Error('no such id');
+    }
+    const entities = this.getAll().slice();
+    const index = entities.indexOf(e);
+    entities.splice(index, 1);
+    this.update({ entities });
+  }
+
+  private sort(entities: T[]): T[] {
+    return entities.sort((a, b) => +a[this.idKey] - +b[this.idKey])
   }
 }

@@ -1,12 +1,6 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-
-interface StoreOptions {
-  name: string;
-  cache?: number;
-}
-
-type Middleware<T> = (oldState: Readonly<T>, newState: Readonly<T>) => T;
+import { StoreMiddleware, StoreOptions } from 'typing';
 
 export class Store<T extends Object> {
   protected data: BehaviorSubject<T>;
@@ -15,7 +9,7 @@ export class Store<T extends Object> {
   private cacheStart: Date;
   private cache: number;
   private cacheTimer: number;
-  private updateMiddlewares: Middleware<T>[] = [];
+  private updateMiddlewares: StoreMiddleware<T>[] = [];
 
   constructor(
     private initialData: T,
@@ -94,7 +88,7 @@ export class Store<T extends Object> {
     return this.cacheStatus.getValue();
   }
 
-  public addMiddleware(middleware: Middleware<T>): void {
+  public addMiddleware(middleware: StoreMiddleware<T>): void {
     this.updateMiddlewares.push(middleware);
   }
 
