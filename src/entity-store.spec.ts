@@ -32,6 +32,8 @@ describe('basic entity', () => {
     mockList = createMockList();
   });
 
+  afterEach(() => store.destroy());
+
   it('created', () => {
     expect(store).toBeInstanceOf(EntityStore);
   });
@@ -92,6 +94,8 @@ describe('active', () => {
     store.setEntities(mockList);
   });
 
+  afterEach(() => store.destroy());
+
   it('no active', () => {
     const result = store.getActive();
     expect(result).toBeUndefined();
@@ -120,6 +124,8 @@ describe('observable entity', () => {
     store = new EntityStore<TestObject, 'objectId'>({ name: 'test', idKey: 'objectId' });
     mockList = createMockList();
   });
+
+  afterEach(() => store.destroy());
 
   it('select value', async () => {
     await expect(store.selectAll().pipe(first()).toPromise()).resolves.toMatchObject([]);

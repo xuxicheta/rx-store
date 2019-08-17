@@ -43,6 +43,8 @@ describe('basic value', () => {
     store = new Store(initState(), { name: 'test' });
   });
 
+  afterEach(() => store.destroy());
+
   it('created', () => {
     expect(store).toBeInstanceOf(Store);
   });
@@ -93,6 +95,8 @@ describe('basic cache', () => {
     store = new Store(initState(), { name: 'test', cache: 100 });
   });
 
+  afterEach(() => store.destroy());
+
   it('set cache', () => {
     expect(store.hasCache()).toBeTruthy();
   });
@@ -120,6 +124,8 @@ describe('basic loading', () => {
     store = new Store(initState(), { name: 'test' });
   });
 
+  afterEach(() => store.destroy());
+
   it('init loading', () => {
     expect(store.getLoading()).toBeFalsy();
   });
@@ -142,6 +148,8 @@ describe('observable value', () => {
   beforeEach(() => {
     store = new Store(initState(), { name: 'test' });
   });
+
+  afterEach(() => store.destroy());
 
   it('select value', async () => {
     await expect(store.select().pipe(first()).toPromise()).resolves.toMatchObject(initState());
@@ -189,6 +197,8 @@ describe('observable loading', () => {
     store = new Store(initState(), { name: 'test' });
   });
 
+  afterEach(() => store.destroy());
+
   it('set loading', () => {
     const listener = jest.fn(state => state);
     store.selectLoading().subscribe(listener);
@@ -204,6 +214,8 @@ describe('observable caching', () => {
   beforeEach(() => {
     store = new Store(initState(), { name: 'test', cache: 100 });
   });
+
+  afterEach(() => store.destroy());
 
   it('observe cache at set', (done) => {
     const listener = jest.fn(state => state);
@@ -223,6 +235,8 @@ describe('fetching', () => {
   beforeEach(() => {
     store = new Store(initState(), { name: 'test', cache: 100 });
   });
+
+  afterEach(() => store.destroy());
 
   it('fetch result', async () => {
     await expect(store.fetch(fetchFunction).toPromise()).resolves.toMatchObject({ name: 'Rick', value: 42 });
@@ -268,6 +282,8 @@ describe('middleware', () => {
   beforeEach(() => {
     store = new Store(initState(), { name: 'test' });
   });
+
+  afterEach(() => store.destroy());
 
   it('call middleware', () => {
     const listener = jest.fn((oldState, newState) => newState);

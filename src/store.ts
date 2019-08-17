@@ -1,6 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StoreMiddleware, StoreOptions } from 'typing';
+import { addStore, removeStore } from './sunduk';
 
 export class Store<T extends Object> {
   protected data: BehaviorSubject<T>;
@@ -10,6 +11,7 @@ export class Store<T extends Object> {
   private cache: number;
   private cacheTimer: number;
   private updateMiddlewares: StoreMiddleware<T>[] = [];
+  private storeName: string;
 
   constructor(
     private initialData: T,
@@ -19,6 +21,8 @@ export class Store<T extends Object> {
     this.loading = new BehaviorSubject(false);
     this.cacheStatus = new BehaviorSubject(false);
     this.cache = options.cache;
+    this.storeName = options.name;
+    addStore(this.storeName, this);
   }
 
   public getValue(): T {
@@ -107,5 +111,9 @@ export class Store<T extends Object> {
       newState = middleware.call(this, oldState, newState);
     })
     return newState;
+  }
+
+  public destroy() {
+    removeStore(this.storeName);
   }
 }
