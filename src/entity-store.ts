@@ -87,10 +87,9 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
     if(this.getEntity(entity[this.idKey])) {
       throw new Error('id duplicate');
     }
-    const rawEntities = this.getAll().slice();
-    rawEntities.push(entity);
-    const entities = this.sort(rawEntities);
-    this.update({ entities });
+    const entities = this.getAll().slice();
+    entities.push(entity);
+    this.setEntities(entities);
   }
 
   public removeEntity(id: ID) {
@@ -101,7 +100,7 @@ export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> exte
     const entities = this.getAll().slice();
     const index = entities.indexOf(e);
     entities.splice(index, 1);
-    this.update({ entities });
+    this.setEntities(entities);
   }
 
   private sort(entities: T[]): T[] {
