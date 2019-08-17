@@ -1,6 +1,6 @@
 {
   "name": "sunduk",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Simplest state manager, inspired by Akita",
   "main": "index.js",
   "scripts": {
