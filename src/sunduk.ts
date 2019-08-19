@@ -1,38 +1,53 @@
 import glob from 'window-or-global';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Store } from 'store';
 
-const globSubj = new Subject();
 
-const sunduk = {
-  prod: false,
-  __stores: {} as Record<string, Store<any>>,
-  __subscriptions: {} as Record<string, Subscription>,
-  event: globSubj.asObservable(),
-}
+export class SundukUtils {
+  static changes$ = new Subject<any>();
 
-glob.__sunduk = sunduk;
-
-export function enableSundukProdMode() {
-  sunduk.prod = true;
-}
-
-export function addStore(name: string, store: Store<any>) {
-  if (sunduk.prod) {
-    return;
+  static meta = {
+    prod: false,
+    __stores: {} as Record<string, Store<any>>,
+    __subscriptions: {} as Record<string, Subscription>,
+    changes: SundukUtils.changes$.asObservable(),
   }
-  if (sunduk.__stores.hasOwnProperty(name)) {
-    throw new Error('duplicate store names');
+
+  static enableSundukProdMode() {
+    SundukUtils.meta.prod = true;
   }
-  sunduk.__stores[name] = store;
-  sunduk.__subscriptions[name] = store.select().subscribe(globSubj);
+
+  static addStore<T>(name: string, store: Store<T>) {
+    if (SundukUtils.meta.prod) {
+      return;
+    }
+    if (SundukUtils.meta.__stores.hasOwnProperty(name)) {
+      throw new Error('duplicate store names');
+    }
+    SundukUtils.meta.__stores[name] = store;
+    SundukUtils.meta.__subscriptions[name] = store.select().subscribe(SundukUtils.changes$);
+    SundukUtils.sendSundukMessage('addStore', { name })
+  }
+
+  static removeStore(name: string) {
+    if (SundukUtils.meta.prod) {
+      return;
+    }
+    SundukUtils.meta.__subscriptions[name].unsubscribe();
+    delete SundukUtils.meta.__stores[name];
+    delete SundukUtils.meta.__subscriptions[name];
+    SundukUtils.sendSundukMessage('removeStore', { name })
+  }
+
+  static sendSundukMessage(type: string, context: any) {
+    if ('postMessage' in glob) {
+      glob.postMessage({
+        message: 'sunduk:message',
+        type,
+        context,
+      }, "*");
+    }
+  }
 }
 
-export function removeStore(name: string) {
-  if (sunduk.prod) {
-    return;
-  }
-  sunduk.__subscriptions[name].unsubscribe();
-  delete sunduk.__stores[name];
-  delete sunduk.__subscriptions[name];
-}
+glob.__SUNDUK_META__ = SundukUtils.meta;

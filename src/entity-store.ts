@@ -1,7 +1,7 @@
 import { Store } from './store';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { EntityStoreOptions, ID, EntityState } from 'typing';
+import { EntityStoreOptions, ID, EntityState } from './typing';
 
 export class EntityStore<T extends Record<IdKey, ID>, IdKey extends string> extends Store<EntityState<T>> {
   private idKey: IdKey;

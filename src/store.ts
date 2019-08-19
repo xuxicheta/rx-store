@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { StoreMiddleware, StoreOptions } from 'typing';
-import { addStore, removeStore } from './sunduk';
+import { StoreMiddleware, StoreOptions } from './typing';
+import { SundukUtils } from './sunduk';
 
 export class Store<T extends Object> {
   protected data: BehaviorSubject<T>;
@@ -22,7 +22,7 @@ export class Store<T extends Object> {
     this.cacheStatus = new BehaviorSubject(false);
     this.cache = options.cache;
     this.storeName = options.name;
-    addStore(this.storeName, this);
+    SundukUtils.addStore(this.storeName, this);
   }
 
   public getValue(): T {
@@ -64,7 +64,7 @@ export class Store<T extends Object> {
   public fetch(fetchingFunction: () => Observable<T>): Observable<T> {
     this.setLoading(true);
     return fetchingFunction().pipe(
-      tap(result => this.set(result)),
+      tap((result: T) => this.set(result)),
       tap(() => this.setLoading(false)),
     )
   }
@@ -114,6 +114,9 @@ export class Store<T extends Object> {
   }
 
   public destroy() {
-    removeStore(this.storeName);
+    this.data.complete();
+    this.loading.complete();
+    this.cacheStatus.complete();
+    SundukUtils.removeStore(this.storeName);
   }
 }

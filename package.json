@@ -1,8 +1,8 @@
 {
   "name": "sunduk",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Simplest state manager, inspired by Akita",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "jest",
     "build": "tsc"
